@@ -1,0 +1,118 @@
+blueprint:
+  name: Shield App Launcher for Harmony Remote
+  description: >
+    Automatically launches applications on NVIDIA Shield when the Harmony Remote
+    activity changes to a matching pattern like "Watch YouTube" or "Watch Plex".
+    Uses the Android TV integration's play_media service with app package names.
+  domain: automation
+  input:
+    harmony_remote:
+      name: Harmony Remote
+      description: Select your Harmony Remote entity
+      selector:
+        entity:
+          domain: remote
+          integration: harmony
+    shield_android_tv:
+      name: Shield Android TV Entity
+      description: Select the Android TV entity for your Shield
+      selector:
+        entity:
+          domain: media_player
+          integration: androidtv_remote
+    startup_delay:
+      name: Shield Startup Delay
+      description: Delay in seconds to wait if Shield was off before selecting the app
+      default: 15
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: seconds
+          mode: slider
+          step: 1
+    custom_app_mappings:
+      name: Custom Application Mappings
+      description: >
+        Add your own custom mappings for Harmony activities to app package names.
+        Only add entries here if they're not in the default mappings or you want to override them.
+      default: {}
+      selector:
+        object:
+
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input harmony_remote
+    attribute: current_activity
+
+variables:
+  harmony_remote: !input harmony_remote
+  shield_android_tv: !input shield_android_tv
+  startup_delay: !input startup_delay
+  custom_app_mappings: !input custom_app_mappings
+  current_activity: "{{ trigger.to_state.attributes.current_activity }}"
+  activity_prefix: "Watch "
+
+  # Default app package mappings for common apps
+  default_app_mappings:
+    "Watch YouTube": "com.google.android.youtube.tv"
+    "Watch Netflix": "com.netflix.ninja"
+    "Watch Prime Video": "com.amazon.amazonvideo.livingroom"
+    "Watch Disney+": "com.disney.disneyplus"
+    "Watch Plex": "com.plexapp.android"
+    "Watch HBO Max": "com.hbo.hbonow"
+    "Watch Hulu": "com.hulu.livingroomplus"
+    "Watch Kodi": "org.xbmc.kodi"
+    "Watch Spotify": "com.spotify.tv.android"
+    "Watch Twitch": "tv.twitch.android.app"
+    "Watch Peacock": "com.peacocktv.peacockandroid"
+    "Watch Paramount+": "com.cbs.app"
+    "Watch Apple TV": "com.apple.atve.androidtv.appletv"
+    "Watch Emby": "tv.emby.embyatv"
+    "Watch Jellyfin": "org.jellyfin.androidtv"
+    "Watch VLC": "org.videolan.vlc"
+    "Watch Tubi": "com.tubitv.tubi"
+    "Watch Crunchyroll": "com.ellation.crunchyroll"
+    "Watch ESPN": "com.espn.score_center"
+    "Watch YouTube TV": "com.google.android.youtube.tvunplugged"
+    "Watch Google Play Movies": "com.google.android.videos"
+    "Watch Google Play Music": "com.google.android.music"
+    "Watch TED": "com.ted.android.tv"
+    "Watch Vimeo": "com.vimeo.android.videoapp"
+    "Watch Pandora": "com.pandora.android.atv"
+    "Watch Sling TV": "com.sling"
+    "Watch Starz": "com.starz.starzplay.android"
+    "Watch Showtime": "com.showtime.standalone"
+    "Watch CBS": "com.cbs.ott"
+    "Watch Discovery+": "com.discovery.discoveryplus.androidtv"
+    "Watch AMC+": "com.amcplus.tv"
+    "Watch PBS": "com.pbs.video"
+    "Watch Vudu": "air.com.vudu.air.DownloaderTablet"
+
+  # Combine default and custom mappings, with custom taking precedence
+  app_mappings: "{{ default_app_mappings | combine(custom_app_mappings) }}"
+
+  was_shield_off: >
+    {{ is_state(shield_android_tv, 'off') or 
+       is_state(shield_android_tv, 'standby') or 
+       is_state(shield_android_tv, 'unavailable') }}
+
+condition:
+  - condition: template
+    value_template: "{{ current_activity.startswith(activity_prefix) }}"
+  - condition: template
+    value_template: "{{ current_activity in app_mappings }}"
+
+action:
+  - delay:
+      seconds: "{{ startup_delay if was_shield_off else 2 }}"
+
+  - service: media_player.play_media
+    target:
+      entity_id: "{{ shield_android_tv }}"
+    data:
+      media_content_type: "app"
+      media_content_id: "{{ app_mappings[current_activity] }}"
