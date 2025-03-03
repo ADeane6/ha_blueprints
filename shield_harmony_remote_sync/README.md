@@ -21,7 +21,7 @@ This blueprint creates an automation that automatically launches applications on
 
 1. Click the button below to import this blueprint into your Home Assistant instance:
 
-   [![Open your Home Assistant instance and import this blueprint.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/yourusername/ha-blueprints/blob/main/shield-app-launcher.yaml)
+   [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2FADeane6%2Fha_blueprints%2Frefs%2Fheads%2Fmain%2Fshield_harmony_remote_sync%2Fshield_harmony_remote_sync.yaml)
 
    Alternatively, copy the YAML code and manually import it via **Settings -> Automations & Scenes -> Blueprints -> Import Blueprint**.
 
